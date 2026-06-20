@@ -6,160 +6,81 @@ A full-stack Tic-Tac-Toe (XO) game with a Go backend, Vue 3 frontend, and Q-lear
 
 ## Project Structure
 
-```
-XOkingdom/
-├── Server/          # Go backend
-│   ├── XOkingdom.go # Main server file
-│   ├── brain.json   # Q-table (72,712 game states)
-│   ├── go.mod       # Module definition
-│   └── go.sum       # Dependency checksums
-│
-├── Site/            # Vue 3 frontend
-│   ├── src/         # Source code
-│   ├── index.html   # Entry HTML
-│   ├── package.json # Dependencies
-│   └── vite.config.js # Build config
-│
-├── .gitignore
-└── README.md
+Two folders only:
+
+**Server/** — Go backend
+- XOkingdom.go (server logic, routing, encryption, AI)
+- brain.json (Q-table, 72,712 states)
+- go.mod, go.sum
+
+**Site/** — Vue 3 frontend
+- src/ (all source components)
+- index.html, package.json, vite.config.js
+
 ---
 
 ## Server (Go)
 
-### Tech Stack
-- Go with Gin framework for routing and HTTP
-- GORM for PostgreSQL database ORM
-- PostgreSQL on port 5432
+**Stack:** Go + Gin + GORM + PostgreSQL
+**Encryption:** AES-256-GCM, 32-byte key from `SECRET_KEY_HEX`, random 12-byte nonce, double encryption for MatchID
+**AI:** Q-learning with `brain.json` (72,712 states), loaded once at startup, `bestMove()` for optimal move selection
+**Auth:** OTP via Brevo SMTP (`SMTP_PASS`), device fingerprinting (browser, OS, CPU, screen, location)
 
-### Encryption
-- AES-256-GCM for all game data
-- 32-byte key from `SECRET_KEY_HEX` environment variable
-- Random 12-byte nonce per encryption operation
-- Double encryption for MatchID
+**API Routes:**
+- `POST /api/auth/send-otp` — send verification code
+- `POST /api/auth/verify-otp` — verify the code
+- `POST /api/auth/auto-login` — auto-login via saved token
+- `POST /api/game/xo/3x3/move` — submit a move
+- `POST /api/game/xo/3x3/give-up` — forfeit the game
+- `POST /api/game/xo/3x3/resume-playing` — resume a saved game
+- `POST /api/game/xo/3x3/time-out` — time ran out
 
-### AI
-- Q-learning reinforcement learning
-- `brain.json`: 72,712 game states
-- Loaded once at server startup via `init()`
-- `bestMove()` selects the optimal move
-
-### Authentication
-- OTP via Brevo SMTP email
-- SMTP password from `SMTP_PASS` environment variable
-- Device fingerprinting: browser, OS, CPU cores, screen, timezone, language, battery, geolocation (via ipapi.co)
-
-### API Routes
-
-| Route | Method | Description |
-|-------|--------|-------------|
-| `/api/auth/send-otp` | POST | Send verification code |
-| `/api/auth/verify-otp` | POST | Verify the code |
-| `/api/auth/auto-login` | POST | Auto-login via saved token |
-| `/api/game/xo/3x3/move` | POST | Submit a move |
-| `/api/game/xo/3x3/give-up` | POST | Forfeit the game |
-| `/api/game/xo/3x3/resume-playing` | POST | Resume a saved game |
-| `/api/game/xo/3x3/time-out` | POST | Time ran out |
-
-### Rate Limiting
-- OTP: 1 request per 60 seconds
-- Game: 5 requests per second
-
-### Anti-Cheat
-- `is_malicious_move()`: Validates that only one cell changed from empty to the player's symbol
-- `is_malicious_game()`: Validates game settings (difficulty, symbol, click, timer, board)
-
-### Game Logic
-- `roundnum` (0-9) calculated from filled cells count
-- `is_win()`: Checks 8 win paths with non-empty cell validation
-- Rounds: 0 (AI starts first), 1 (Player starts), 2-7 (alternating), 8 (AI final move), 9 (Player final move)
-
-### Statistics
-- Wins, Losses, Draws, Total — updated on every game end
-- Responses: WIN, LOSE, DRAW — includes final board state
+**Rate Limiting:** OTP 1/60s, Game 5/s
+**Anti-Cheat:** `is_malicious_move()` validates single-cell changes, `is_malicious_game()` validates settings
+**Game Logic:** roundnum 0-9, `is_win()` checks 8 paths, rounds alternate AI/Player
+**Stats:** Wins, Losses, Draws, Total — updated on game end
 
 ---
 
 ## Site (Vue 3)
 
-### Tech Stack
-- Vue 3 (Options API)
-- Vite build tool
-- SCSS styling
+**Stack:** Vue 3 (Options API) + Vite + SCSS
 
-### Pages
+**Pages:**
+- **Authentication.vue** — login/register with OTP, device info collection, validation (nickname 3-15 chars, password 8+ chars, age 18+)
+- **XOGame_3X3.vue** — game board, 14-min timer, difficulty/symbol/starter settings, `startup()` and `make_move()`
+- **Policy.vue** — Privacy Policy & Terms of Service, two tabs, "Reviewed by Bashir" footer, dark theme
+- **home.vue** — home page
+- **XOGame.vue** — game selection page
 
-**Authentication.vue** — Login & registration:
-- Two tabs: Log in and Sign in
-- OTP verification
-- Collects device info: browser, OS, CPU, screen, timezone, language, battery, network, IP, country, city
-- Validation: nickname (3-15 chars), password (8+ chars), age (18+)
-
-**XOGame_3X3.vue** — Game page:
-- 14-minute countdown timer
-- 3×3 game board
-- Settings: difficulty, symbol (X/O), starter
-- `startup()`: Initialize the game
-- `make_move()`: Send move, receive result
-
-**Policy.vue** — Privacy Policy & Terms of Service:
-- Two tabs for navigation
-- "Reviewed by Bashir" footer
-- Dark theme
-
-**home.vue** — Home page
-
-**XOGame.vue** — Game selection page
-
-### Networking
-- `config.js`: Uses `window.location.hostname` to determine API URL
-- 11 fetch calls across the project
-
-### Fonts
-- "Comic Sans MS" on Windows, "Comic Neue" elsewhere (via Google Fonts)
+**Networking:** `config.js` uses `window.location.hostname` for API URL, 11 fetch calls
+**Fonts:** Comic Sans MS (Windows), Comic Neue (elsewhere, via Google Fonts)
 
 ---
 
 ## Python — AI Training
 
-`Tic-Tac-Toe_3X3.py`:
-- Q-learning training over 5,000,000 self-play rounds
-- Output: `brain.json` with 72,712 states
+- Q-learning over 5,000,000 self-play rounds
+- Output: `brain.json` (72,712 states)
 
 ---
 
 ## Design
 
-- Background: `hsl(283, 86%, 14%)` (dark purple)
-- Containers: `rgb(16, 16, 36)` (dark blue)
-- Active buttons: 5px bottom border in `rgb(1, 1, 110)`
-- Hover: `rgb(4, 4, 34)`
-- Logo: X in blue, O in purple
-- Floating title auto-hides on collision with the container
+Background `hsl(283, 86%, 14%)`, containers `rgb(16, 16, 36)`, active buttons `rgb(1, 1, 110)` with 5px bottom border, hover `rgb(4, 4, 34)`. Logo: X in blue, O in purple. Floating title auto-hides on collision.
 
 ---
 
 ## Running Locally
 
-### Requirements
-- Go 1.20+
-- Node.js
-- PostgreSQL on port 5432
+**Requirements:** Go 1.20+, Node.js, PostgreSQL on port 5432
 
-### Server
 ```
-cd Server
-# Create .env file with your keys
-go run XOkingdom.go
+cd Server && go run XOkingdom.go    # start backend
+cd Site   && npm install && npm run dev  # start frontend
 ```
 
-### Site
-```
-cd Site
-npm install
-npm run dev
-```
-
-Open `http://localhost:5173` in your browser.
+Open `http://localhost:5173`
 
 ---
 
@@ -171,142 +92,82 @@ MIT
 
 # XOkingdom — لعبة XO (Tic-Tac-Toe)
 
-مشروع متكامل للعبة إكس-أو يشمل خادماً خلفياً بلغة Go مع تشفير AES-256-GCM وذكاء اصطناعي قائم على التعلم المعزز (Q-learning)، وواجهة أمامية بلغة Vue 3.
+مشروع متكامل للعبة إكس-أو يشمل خادماً خلفياً بلغة Go مع تشفير AES-256-GCM وذكاء اصطناعي Q-learning، وواجهة أمامية بلغة Vue 3.
 
 ---
 
 ## هيكل المشروع
 
-```
-XOkingdom/
-├── Server/          # الخادم الخلفي (Go)
-│   ├── XOkingdom.go # ملف السيرفر الرئيسي
-│   ├── brain.json   # جدول Q (72,712 حالة لعبة)
-│   ├── go.mod       # تعريف الحزمة والتبعيات
-│   └── go.sum       # التواقيع الرقمية للحزم
-│
-├── Site/            # الواجهة الأمامية (Vue 3)
-│   ├── src/         # مجلد المصدر
-│   ├── index.html   # الصفحة الرئيسية
-│   ├── package.json # تعريف التبعيات
-│   └── vite.config.js # إعدادات البناء
-│
-├── .gitignore       # الملفات المستثناة من git
-└── README.md        # هذا الملف
-```
+مجلدان رئيسيان:
+
+**Server/** — الخادم الخلفي (Go)
+- XOkingdom.go (منطق السيرفر، التشفير، الذكاء الاصطناعي)
+- brain.json (جدول Q، 72,712 حالة)
+- go.mod, go.sum
+
+**Site/** — الواجهة الأمامية (Vue 3)
+- src/ (جميع مكونات المصدر)
+- index.html, package.json, vite.config.js
 
 ---
 
 ## السيرفر (Go)
 
-### التقنيات
-- Go مع إطار Gin لإدارة المسارات وخدمة HTTP
-- GORM للربط مع قاعدة البيانات PostgreSQL
-- PostgreSQL على المنفذ 5432
+**التقنيات:** Go + Gin + GORM + PostgreSQL
+**التشفير:** AES-256-GCM، مفتاح 32 بايت من `SECRET_KEY_HEX`، nonce عشوائي 12 بايت، تشفير مزدوج للـ MatchID
+**الذكاء الاصطناعي:** Q-learning مع `brain.json` (72,712 حالة)، يُحمل عند الإقلاع
+**المصادقة:** OTP عبر Brevo SMTP (`SMTP_PASS`)، معلومات الجهاز (المتصفح، النظام، المعالج، الشاشة، الموقع)
 
-### التشفير
-- AES-256-GCM لتشفير جميع بيانات اللعبة
-- مفتاح 32 بايت يُقرأ من متغير البيئة `SECRET_KEY_HEX`
-- nonce عشوائي 12 بايت لكل عملية تشفير
-- MatchID مشفر مرتين (تشفير مزدوج)
+**المسارات:**
+- `POST /api/auth/send-otp` — إرسال رمز التحقق
+- `POST /api/auth/verify-otp` — التحقق من الرمز
+- `POST /api/auth/auto-login` — دخول تلقائي بالتوكن
+- `POST /api/game/xo/3x3/move` — إرسال حركة
+- `POST /api/game/xo/3x3/give-up` — استسلام
+- `POST /api/game/xo/3x3/resume-playing` — استئناف اللعبة
+- `POST /api/game/xo/3x3/time-out` — انتهاء الوقت
 
-### الذكاء الاصطناعي
-- خوارزمية Q-learning
-- ملف `brain.json` يحتوي 72,712 حالة لعبة
-- يُحمل في الذاكرة مرة واحدة عند إقلاع السيرفر
-- البحث عن أفضل حركة متاحة
-
-### المصادقة
-- OTP عبر البريد الإلكتروني باستخدام Brevo SMTP
-- كلمة مرور SMTP من متغير البيئة `SMTP_PASS`
-- معلومات الجهاز: المتصفح، نظام التشغيل، المعالج، الشاشة، الموقع الجغرافي
-
-### المسارات
-
-| المسار | الطريقة | الوظيفة |
-|--------|---------|---------|
-| `/api/auth/send-otp` | POST | إرسال رمز التحقق للبريد |
-| `/api/auth/verify-otp` | POST | التحقق من الرمز |
-| `/api/auth/auto-login` | POST | دخول تلقائي بالتوكن |
-| `/api/game/xo/3x3/move` | POST | إرسال حركة اللاعب |
-| `/api/game/xo/3x3/give-up` | POST | استسلام |
-| `/api/game/xo/3x3/resume-playing` | POST | استئناف اللعبة |
-| `/api/game/xo/3x3/time-out` | POST | انتهاء الوقت |
-
-### تحديد المعدل
-- OTP: طلب واحد لكل 60 ثانية
-- اللعبة: 5 طلبات في الثانية
-
-### كشف التلاعب
-- التحقق من أن اللاعب غير خلية واحدة فقط من فارغة إلى رمزه
-- التحقق من صحة إعدادات اللعبة
-
-### منطق اللعبة
-- يُحتسب رقم الجولة (0-9) بعدد الخلايا المملوءة
-- فحص 8 مسارات فوز مع التأكد من أن الخلايا غير فارغة
-- الجولات: 0 (الكمبيوتر يسبق)، 1 (اللاعب يبدأ)، 2-7 (تبادل)، 8 (آخر حركة للكمبيوتر)، 9 (آخر حركة للاعب)
-
-### الإحصائيات
-- فوز، خسارة، تعادل، المجموع — تُحدث عند نهاية كل لعبة
+**تحديد المعدل:** OTP طلب/60ث، اللعبة 5 طلبات/ث
+**كشف التلاعب:** التحقق من تغيير خلية واحدة فقط، التحقق من صحة الإعدادات
+**منطق اللعبة:** الجولات 0-9، فحص 8 مسارات فوز، تبادل الأدوار
+**الإحصائيات:** فوز، خسارة، تعادل، المجموع
 
 ---
 
 ## الموقع (Vue 3)
 
-### التقنيات
-- Vue 3 (Options API)
-- Vite للبناء
-- SCSS للتصميم
+**التقنيات:** Vue 3 (Options API) + Vite + SCSS
 
-### الصفحات
+**الصفحات:**
+- **التسجيل** — دخول/اشتراك مع OTP، معلومات الجهاز، التحقق (الاسم 3-15 حرف، كلمة المرور 8+ أحرف، العمر 18+)
+- **اللعبة** — رقعة 3×3، مؤقت 14 دقيقة، إعدادات الصعوبة والرمز والبادئ
+- **السياسة** — سياسة الخصوصية وشروط الخدمة، توقيع "Reviewed by Bashir"
+- **الرئيسية** و **اختيار اللعبة**
 
-**التسجيل** — تسجيل الدخول والاشتراك:
-- تبويبان: دخول واشتراك
-- التحقق برمز OTP
-- معلومات الجهاز: المتصفح، نظام التشغيل، المعالج، الشاشة، المنطقة الزمنية، اللغة
-- التحقق: الاسم (3-15 حرف)، كلمة المرور (8 أحرف فأكثر)، العمر (18 سنة فأكثر)
-
-**اللعبة** — صفحة اللعبة:
-- مؤقت 14 دقيقة
-- رقعة 3×3
-- إعدادات: الصعوبة، الرمز، البادئ
-
-**السياسة** — سياسة الخصوصية وشروط الخدمة
-- تبويبان
-- توقيع "Reviewed by Bashir"
-- ألوان داكنة
-
-### الخطوط
-- Comic Sans MS على ويندوز، Comic Neue على باقي الأجهزة
+**الربط:** `config.js` يستخدم `window.location.hostname`، 11 طلب fetch
+**الخطوط:** Comic Sans MS (ويندوز)، Comic Neue (بقية الأجهزة)
 
 ---
 
 ## Python — التدريب
 
-تدريب Q-learning عبر 5,000,000 جولة لعب ذاتي
-المخرجات: brain.json (72,712 حالة)
+تدريب Q-learning عبر 5,000,000 جولة. المخرجات: brain.json (72,712 حالة)
+
+---
+
+## التصميم
+
+خلفية `hsl(283, 86%, 14%)`، صناديق `rgb(16, 16, 36)`، أزرار نشطة `rgb(1, 1, 110)` مع حد سفلي 5px، hover `rgb(4, 4, 34)`. الشعار: X أزرق، O بنفسجي. العنوان يختفي تلقائيا عند التصادم.
 
 ---
 
 ## التشغيل
 
-### المتطلبات
-- Go الإصدار 1.20 فأحدث
-- Node.js
-- PostgreSQL
+**المتطلبات:** Go 1.20+، Node.js، PostgreSQL
 
-### تشغيل السيرفر
 ```
-cd Server
-# إنشاء ملف .env
-go run XOkingdom.go
-```
-
-### تشغيل الموقع
-```
-cd Site
-npm install
-npm run dev
+cd Server && go run XOkingdom.go
+cd Site   && npm install && npm run dev
 ```
 
 ثم افتح `http://localhost:5173`
