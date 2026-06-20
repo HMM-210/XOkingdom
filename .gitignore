@@ -1,0 +1,7 @@
+node_modules/
+dist/
+*.exe
+.env
+.vscode/
+__pycache__/
+*.pyc
