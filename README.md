@@ -1,3 +1,174 @@
+# XOkingdom — Tic-Tac-Toe Game
+
+A full-stack Tic-Tac-Toe (XO) game with a Go backend, Vue 3 frontend, and Q-learning AI trained over 5 million self-play rounds.
+
+---
+
+## Project Structure
+
+```
+XOkingdom/
+├── Server/          # Go backend
+│   ├── XOkingdom.go # Main server file
+│   ├── brain.json   # Q-table (72,712 game states)
+│   ├── go.mod       # Module definition
+│   └── go.sum       # Dependency checksums
+│
+├── Site/            # Vue 3 frontend
+│   ├── src/         # Source code
+│   ├── index.html   # Entry HTML
+│   ├── package.json # Dependencies
+│   └── vite.config.js # Build config
+│
+├── .gitignore
+└── README.md
+---
+
+## Server (Go)
+
+### Tech Stack
+- Go with Gin framework for routing and HTTP
+- GORM for PostgreSQL database ORM
+- PostgreSQL on port 5432
+
+### Encryption
+- AES-256-GCM for all game data
+- 32-byte key from `SECRET_KEY_HEX` environment variable
+- Random 12-byte nonce per encryption operation
+- Double encryption for MatchID
+
+### AI
+- Q-learning reinforcement learning
+- `brain.json`: 72,712 game states
+- Loaded once at server startup via `init()`
+- `bestMove()` selects the optimal move
+
+### Authentication
+- OTP via Brevo SMTP email
+- SMTP password from `SMTP_PASS` environment variable
+- Device fingerprinting: browser, OS, CPU cores, screen, timezone, language, battery, geolocation (via ipapi.co)
+
+### API Routes
+
+| Route | Method | Description |
+|-------|--------|-------------|
+| `/api/auth/send-otp` | POST | Send verification code |
+| `/api/auth/verify-otp` | POST | Verify the code |
+| `/api/auth/auto-login` | POST | Auto-login via saved token |
+| `/api/game/xo/3x3/move` | POST | Submit a move |
+| `/api/game/xo/3x3/give-up` | POST | Forfeit the game |
+| `/api/game/xo/3x3/resume-playing` | POST | Resume a saved game |
+| `/api/game/xo/3x3/time-out` | POST | Time ran out |
+
+### Rate Limiting
+- OTP: 1 request per 60 seconds
+- Game: 5 requests per second
+
+### Anti-Cheat
+- `is_malicious_move()`: Validates that only one cell changed from empty to the player's symbol
+- `is_malicious_game()`: Validates game settings (difficulty, symbol, click, timer, board)
+
+### Game Logic
+- `roundnum` (0-9) calculated from filled cells count
+- `is_win()`: Checks 8 win paths with non-empty cell validation
+- Rounds: 0 (AI starts first), 1 (Player starts), 2-7 (alternating), 8 (AI final move), 9 (Player final move)
+
+### Statistics
+- Wins, Losses, Draws, Total — updated on every game end
+- Responses: WIN, LOSE, DRAW — includes final board state
+
+---
+
+## Site (Vue 3)
+
+### Tech Stack
+- Vue 3 (Options API)
+- Vite build tool
+- SCSS styling
+
+### Pages
+
+**Authentication.vue** — Login & registration:
+- Two tabs: Log in and Sign in
+- OTP verification
+- Collects device info: browser, OS, CPU, screen, timezone, language, battery, network, IP, country, city
+- Validation: nickname (3-15 chars), password (8+ chars), age (18+)
+
+**XOGame_3X3.vue** — Game page:
+- 14-minute countdown timer
+- 3×3 game board
+- Settings: difficulty, symbol (X/O), starter
+- `startup()`: Initialize the game
+- `make_move()`: Send move, receive result
+
+**Policy.vue** — Privacy Policy & Terms of Service:
+- Two tabs for navigation
+- "Reviewed by Bashir" footer
+- Dark theme
+
+**home.vue** — Home page
+
+**XOGame.vue** — Game selection page
+
+### Networking
+- `config.js`: Uses `window.location.hostname` to determine API URL
+- 11 fetch calls across the project
+
+### Fonts
+- "Comic Sans MS" on Windows, "Comic Neue" elsewhere (via Google Fonts)
+
+---
+
+## Python — AI Training
+
+`Tic-Tac-Toe_3X3.py`:
+- Q-learning training over 5,000,000 self-play rounds
+- Output: `brain.json` with 72,712 states
+
+---
+
+## Design
+
+- Background: `hsl(283, 86%, 14%)` (dark purple)
+- Containers: `rgb(16, 16, 36)` (dark blue)
+- Active buttons: 5px bottom border in `rgb(1, 1, 110)`
+- Hover: `rgb(4, 4, 34)`
+- Logo: X in blue, O in purple
+- Floating title auto-hides on collision with the container
+
+---
+
+## Running Locally
+
+### Requirements
+- Go 1.20+
+- Node.js
+- PostgreSQL on port 5432
+
+### Server
+```
+cd Server
+# Create .env file with your keys
+go run XOkingdom.go
+```
+
+### Site
+```
+cd Site
+npm install
+npm run dev
+```
+
+Open `http://localhost:5173` in your browser.
+
+---
+
+## License
+
+MIT
+
+---
+
 # XOkingdom — لعبة XO (Tic-Tac-Toe)
 
 مشروع متكامل للعبة إكس-أو يشمل خادماً خلفياً بلغة Go مع تشفير AES-256-GCM وذكاء اصطناعي قائم على التعلم المعزز (Q-learning)، وواجهة أمامية بلغة Vue 3.
@@ -26,12 +197,12 @@ XOkingdom/
 
 ---
 
-## Server — الخادم الخلفي (Go)
+## السيرفر (Go)
 
 ### التقنيات
-- **لغة Go** مع إطار **Gin** لإدارة المسارات وخدمة HTTP
-- **GORM** للربط مع قاعدة البيانات
-- **PostgreSQL** على المنفذ 5432
+- Go مع إطار Gin لإدارة المسارات وخدمة HTTP
+- GORM للربط مع قاعدة البيانات PostgreSQL
+- PostgreSQL على المنفذ 5432
 
 ### التشفير
 - AES-256-GCM لتشفير جميع بيانات اللعبة
@@ -42,13 +213,13 @@ XOkingdom/
 ### الذكاء الاصطناعي
 - خوارزمية Q-learning
 - ملف `brain.json` يحتوي 72,712 حالة لعبة
-- يُحمل في الذاكرة مرة واحدة عند إقلاع السيرفر (`init()`)
-- البحث عن أفضل حركة متاحة عبر دالة `bestMove()`
+- يُحمل في الذاكرة مرة واحدة عند إقلاع السيرفر
+- البحث عن أفضل حركة متاحة
 
 ### المصادقة
 - OTP عبر البريد الإلكتروني باستخدام Brevo SMTP
 - كلمة مرور SMTP من متغير البيئة `SMTP_PASS`
-- معلومات الجهاز: المتصفح، نظام التشغيل، الشاشة، المعالج، الموقع الجغرافي (عبر ipapi.co)
+- معلومات الجهاز: المتصفح، نظام التشغيل، المعالج، الشاشة، الموقع الجغرافي
 
 ### المسارات
 
@@ -62,27 +233,25 @@ XOkingdom/
 | `/api/game/xo/3x3/resume-playing` | POST | استئناف اللعبة |
 | `/api/game/xo/3x3/time-out` | POST | انتهاء الوقت |
 
-### تحديد المعدل (Rate Limiting)
+### تحديد المعدل
 - OTP: طلب واحد لكل 60 ثانية
 - اللعبة: 5 طلبات في الثانية
 
 ### كشف التلاعب
-- `is_malicious_move()`: التحقق من أن اللاعب غير خلية واحدة فقط من فارغة إلى رمزه
-- `is_malicious_game()`: التحقق من صحة إعدادات اللعبة (الصعوبة، الرمز، النقرة، المؤقت، الرقعة)
+- التحقق من أن اللاعب غير خلية واحدة فقط من فارغة إلى رمزه
+- التحقق من صحة إعدادات اللعبة
 
 ### منطق اللعبة
-- يُحتسب `roundnum` (0-9) بعدد الخلايا المملوءة
-- دالة `is_win()`: فحص 8 مسارات فوز مع التأكد من أن الخلايا غير فارغة
-- الجولات: 0 (بداية، الكمبيوتر يسبق)، 1 (اللاعب يبدأ)، 2-7 (تبادل)، 8 (آخر حركة للكمبيوتر)، 9 (آخر حركة للاعب)
+- يُحتسب رقم الجولة (0-9) بعدد الخلايا المملوءة
+- فحص 8 مسارات فوز مع التأكد من أن الخلايا غير فارغة
+- الجولات: 0 (الكمبيوتر يسبق)، 1 (اللاعب يبدأ)، 2-7 (تبادل)، 8 (آخر حركة للكمبيوتر)، 9 (آخر حركة للاعب)
 
 ### الإحصائيات
-- Wins (فوز)، Losses (خسارة)، Draws (تعادل)، Total (المجموع)
-- تُحدث تلقائياً عند نهاية كل لعبة
-- الردود: WIN، LOSE، DRAW مع إرسال `board` النهائي
+- فوز، خسارة، تعادل، المجموع — تُحدث عند نهاية كل لعبة
 
 ---
 
-## Site — الواجهة الأمامية (Vue 3)
+## الموقع (Vue 3)
 
 ### التقنيات
 - Vue 3 (Options API)
@@ -91,67 +260,45 @@ XOkingdom/
 
 ### الصفحات
 
-**Authentication.vue** — تسجيل الدخول والاشتراك:
-- تبويبان: Log in و Sign in
+**التسجيل** — تسجيل الدخول والاشتراك:
+- تبويبان: دخول واشتراك
 - التحقق برمز OTP
-- يجمع معلومات الجهاز: المتصفح، نظام التشغيل، المعالج، الشاشة، المنطقة الزمنية، اللغة، البطارية، الاتصال، IP، البلد، المدينة
-- التحقق من صحة المدخلات: الاسم (3-15 حرف)، كلمة المرور (8 أحرف فأكثر)، العمر (18 سنة فأكثر)
+- معلومات الجهاز: المتصفح، نظام التشغيل، المعالج، الشاشة، المنطقة الزمنية، اللغة
+- التحقق: الاسم (3-15 حرف)، كلمة المرور (8 أحرف فأكثر)، العمر (18 سنة فأكثر)
 
-**XOGame_3X3.vue** — صفحة اللعبة:
-- مؤقت زمني 14 دقيقة للمباراة
+**اللعبة** — صفحة اللعبة:
+- مؤقت 14 دقيقة
 - رقعة 3×3
-- إعدادات: الصعوبة، الرمز (X/O)، البادئ
-- startup() لبدء اللعبة
-- make_move() لإرسال الحركة واستقبال النتيجة
+- إعدادات: الصعوبة، الرمز، البادئ
 
-**Policy.vue** — سياسة الخصوصية وشروط الخدمة:
-- تبويبان للتنقل
-- توقيع "Reviewed by Bashir" في الأسفل
+**السياسة** — سياسة الخصوصية وشروط الخدمة
+- تبويبان
+- توقيع "Reviewed by Bashir"
 - ألوان داكنة
 
-**home.vue** — الصفحة الرئيسية
-
-**XOGame.vue** — اختيار اللعبة
-
-### الروابط
-- `config.js`: يستخدم `window.location.hostname` لتحديد رابط API
-- 11 طلب fetch عبر المشروع
-
 ### الخطوط
-- "Comic Sans MS" للويندوز، "Comic Neue" لباقي الأجهزة (عبر Google Fonts)
+- Comic Sans MS على ويندوز، Comic Neue على باقي الأجهزة
 
 ---
 
 ## Python — التدريب
 
-ملف `Tic-Tac-Toe_3X3.py`:
-- تدريب Q-learning عبر 5,000,000 جولة لعب ذاتي
-- المخرجات: ملف `brain.json` (72,712 حالة)
-
----
-
-## التصميم
-
-- الخلفية: `hsl(283, 86%, 14%)` (بنفسجي غامق)
-- الصناديق: `rgb(16, 16, 36)` (أزرق داكن)
-- الأزرار النشطة: حد سفلي 5px بلون `rgb(1, 1, 110)`
-- hover: `rgb(4, 4, 34)`
-- شعار XOkingdom: حرف X أزرق، حرف O بنفسجي
-- العنوان العائم يختفي عند التصادم مع الصندوق
+تدريب Q-learning عبر 5,000,000 جولة لعب ذاتي
+المخرجات: brain.json (72,712 حالة)
 
 ---
 
 ## التشغيل
 
-### متطلبات مسبقة
-- Go الإصدار 1.20 أو أحدث
+### المتطلبات
+- Go الإصدار 1.20 فأحدث
 - Node.js
-- PostgreSQL يعمل على المنفذ 5432
+- PostgreSQL
 
 ### تشغيل السيرفر
 ```
 cd Server
-# إنشاء ملف .env بالمفتاح
+# إنشاء ملف .env
 go run XOkingdom.go
 ```
 
@@ -162,7 +309,7 @@ npm install
 npm run dev
 ```
 
-ثم افتح `http://localhost:5173` في المتصفح.
+ثم افتح `http://localhost:5173`
 
 ---
 
