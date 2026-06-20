@@ -1,32 +1,26 @@
 # XOkingdom
 
-Full-stack Tic-Tac-Toe with Q-learning AI, AES-GCM encryption, Go backend, Vue frontend.
-
-لعبة XO كاملة الأطراف مع ذكاء اصطناعي Q-learning وتشفير AES-GCM.
-
-## Structure
+XO لعبة ضد ذكاء اصطناعي **ما رح تربح منه** (إلا إذا تحاكت).  
+مشفرة، محمية، ومن حقك تخسر كأنك بطل.
 
 ```
 XOkingdom/
-├── Server/          — Go backend (API, auth, game logic, AI)
-│   ├── XOkingdom.go — Main server
-│   ├── brain.json   — Q-table (72,712 states)
-│   ├── go.mod / go.sum
-│   └── .env         — SECRET_KEY_HEX, SMTP_PASS
-│
-├── Site/            — Vue 3 frontend
-│   ├── src/         — Source code
-│   ├── index.html
-│   ├── package.json
-│   └── vite.config.js
-│
-├── .gitignore
-└── README.md
+├── Server/     🧠 الباك إند — Go + AES-256-GCM + Q-learning
+├── Site/       🎨 الفرونت — Vue 3 + SCSS + Vite
+└── README.md   🤷 وهذا
 ```
 
-## Setup
+## وش يهمك؟
 
-**Server:**
+- الذكاء الاصطناعي تدرب **5 ملايين جولة** عشان يفضحك
+- كل حركة مشفرة. كل لعبة مشفرة. حتى النتائج مشفرة.
+- لو تحاول تخترق؟ السيرفر يطردك قبل ما تتندم
+- OTP توثيق + rate limiting + كشف الحركات الخبيثة
+- واجهة داكنة نظيفة ما تعمي عيونك
+
+## شغله
+
+**السيرفر:**
 ```
 cd Server
 set SECRET_KEY_HEX=your_32_byte_hex_key
@@ -34,23 +28,13 @@ set SMTP_PASS=your_brevo_password
 go run XOkingdom.go
 ```
 
-**Site:**
+**الموقع:**
 ```
 cd Site
 npm install
 npm run dev
 ```
 
-## Features
+## رخصة
 
-- Q-learning AI (5M self-play training rounds)
-- AES-256-GCM encryption for all game data
-- OTP email authentication
-- Malicious move detection
-- Rate limiting
-- Responsive dark UI
-- Privacy Policy & Terms of Service
-
-## License
-
-MIT
+MIT — كل شيء مسموح. اسرق، عدل، بع. ولا تنسى تذكرني.
