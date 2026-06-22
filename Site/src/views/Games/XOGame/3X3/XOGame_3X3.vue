@@ -170,6 +170,8 @@
           v-model="selected_difficulty"
           :disabled="is_start"
         >
+          <option value="easy">Easy</option>
+          <option value="medium">Medium</option>
           <option value="hard">Hard</option>
         </select>
 
