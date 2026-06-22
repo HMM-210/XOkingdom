@@ -655,110 +655,76 @@ func make_move(c *gin.Context) {
 
 		} else if roundnum >= 2 && roundnum <= 7 {
 
-			
-			board01, boardxo := current_board(request.Board)
-
-			game.Board = Encrypt(board01)
-			
-
 			switch roundnum {
 			case 2: game.Move1 = Encrypt(strconv.Itoa(request.Click))
-					switch game.Difficulty {
-						case "hard":
-							brainData = geniusData
-						case "medium":
-							brainData = averageData
-						case "easy":
-							brainData = stupidData
-						default:
-							c.JSON(http.StatusOK, gin.H{"status": "MALICIOUS"})
-							return
+					switch Decrypt(game.Difficulty) {
+						case "hard": brainData = geniusData
+						case "medium": brainData = averageData
+						case "easy": brainData = stupidData
+						default: c.JSON(http.StatusOK, gin.H{"status": "MALICIOUS"}); return
 					}
 					bestmove := bestMove(request.Board, brainData)
 					game.ComputerMoves = Encrypt(Decrypt(game.ComputerMoves) + strconv.Itoa(bestmove))
 					request.Board[bestmove] = computerSymbol
 					game.Move2 = Encrypt(strconv.Itoa(bestmove))
 			case 3: game.Move2 = Encrypt(strconv.Itoa(request.Click))
-					switch game.Difficulty {
-						case "hard":
-							brainData = geniusData
-						case "medium":
-							brainData = averageData
-						case "easy":
-							brainData = stupidData
-						default:
-							c.JSON(http.StatusOK, gin.H{"status": "MALICIOUS"})
-							return
+					switch Decrypt(game.Difficulty) {
+						case "hard": brainData = geniusData
+						case "medium": brainData = averageData
+						case "easy": brainData = stupidData
+						default: c.JSON(http.StatusOK, gin.H{"status": "MALICIOUS"}); return
 					}
 					bestmove := bestMove(request.Board, brainData)
 					game.ComputerMoves = Encrypt(Decrypt(game.ComputerMoves) + strconv.Itoa(bestmove))
 					request.Board[bestmove] = computerSymbol
 					game.Move3 = Encrypt(strconv.Itoa(bestmove))
 			case 4: game.Move3 = Encrypt(strconv.Itoa(request.Click))
-					switch game.Difficulty {
-						case "hard":
-							brainData = geniusData
-						case "medium":
-							brainData = averageData
-						case "easy":
-							brainData = stupidData
-						default:
-							c.JSON(http.StatusOK, gin.H{"status": "MALICIOUS"})
-							return
+					switch Decrypt(game.Difficulty) {
+						case "hard": brainData = geniusData
+						case "medium": brainData = averageData
+						case "easy": brainData = stupidData
+						default: c.JSON(http.StatusOK, gin.H{"status": "MALICIOUS"}); return
 					}
 					bestmove := bestMove(request.Board, brainData)
 					game.ComputerMoves = Encrypt(Decrypt(game.ComputerMoves) + strconv.Itoa(bestmove))
 					request.Board[bestmove] = computerSymbol
 					game.Move4 = Encrypt(strconv.Itoa(bestmove))
 			case 5: game.Move4 = Encrypt(strconv.Itoa(request.Click))
-					switch game.Difficulty {
-						case "hard":
-							brainData = geniusData
-						case "medium":
-							brainData = averageData
-						case "easy":
-							brainData = stupidData
-						default:
-							c.JSON(http.StatusOK, gin.H{"status": "MALICIOUS"})
-							return
+					switch Decrypt(game.Difficulty) {
+						case "hard": brainData = geniusData
+						case "medium": brainData = averageData
+						case "easy": brainData = stupidData
+						default: c.JSON(http.StatusOK, gin.H{"status": "MALICIOUS"}); return
 					}
 					bestmove := bestMove(request.Board, brainData)
 					game.ComputerMoves = Encrypt(Decrypt(game.ComputerMoves) + strconv.Itoa(bestmove))
 					request.Board[bestmove] = computerSymbol
 					game.Move5 = Encrypt(strconv.Itoa(bestmove))
 			case 6: game.Move5 = Encrypt(strconv.Itoa(request.Click))
-					switch game.Difficulty {
-						case "hard":
-							brainData = geniusData
-						case "medium":
-							brainData = averageData
-						case "easy":
-							brainData = stupidData
-						default:
-							c.JSON(http.StatusOK, gin.H{"status": "MALICIOUS"})
-							return
+					switch Decrypt(game.Difficulty) {
+						case "hard": brainData = geniusData
+						case "medium": brainData = averageData
+						case "easy": brainData = stupidData
+						default: c.JSON(http.StatusOK, gin.H{"status": "MALICIOUS"}); return
 					}
 					bestmove := bestMove(request.Board, brainData)
 					game.ComputerMoves = Encrypt(Decrypt(game.ComputerMoves) + strconv.Itoa(bestmove))
 					request.Board[bestmove] = computerSymbol
 					game.Move6 = Encrypt(strconv.Itoa(bestmove))
 			case 7: game.Move6 = Encrypt(strconv.Itoa(request.Click))
-					switch game.Difficulty {
-						case "hard":
-							brainData = geniusData
-						case "medium":
-							brainData = averageData
-						case "easy":
-							brainData = stupidData
-						default:
-							c.JSON(http.StatusOK, gin.H{"status": "MALICIOUS"})
-							return
+					switch Decrypt(game.Difficulty) {
+						case "hard": brainData = geniusData
+						case "medium": brainData = averageData
+						case "easy": brainData = stupidData
+						default: c.JSON(http.StatusOK, gin.H{"status": "MALICIOUS"}); return
 					}
 					bestmove := bestMove(request.Board, brainData)
 					game.ComputerMoves = Encrypt(Decrypt(game.ComputerMoves) + strconv.Itoa(bestmove))
 					request.Board[bestmove] = computerSymbol
 					game.Move7 = Encrypt(strconv.Itoa(bestmove))
 			}
+			board01, boardxo := current_board(request.Board)
+			game.Board = Encrypt(board01)
 
 			if is_win(boardxo) == computerSymbol {
 				game.Result = Encrypt("computerwin")
